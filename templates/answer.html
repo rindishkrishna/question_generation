@@ -1,3 +1,89 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:b2cf0ab785b8985d7d9121c2989f9b9503020dbc5e9b4561776b371e591e5c4d
-size 2817
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Answer Questions</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/answer.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <script type='text/javascript'>
+        window.smartlook||(function(d) {
+          var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
+          var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
+          c.charset='utf-8';c.src='https://rec.smartlook.com/recorder.js';h.appendChild(c);
+          })(document);
+          smartlook('init', 'bae69e5af34143580302fc3edcd7e3c308ab1809');
+      </script> 
+</head>
+
+<body>
+    <div id="loading" style="background:url(/static/spinner.gif) no-repeat; width: 35px;
+    height: 35px;
+    display: none;
+    cursor: wait;"></div>
+    <a href="/">
+        <div class="logo">Q GEN</div>
+    </a>
+    <div class="main">
+        {% for i in data %}
+        <div class="question-wrapper">
+
+            <div class="question-box">
+                <div class="question">
+                    <span>
+
+                        {{i.question}}</span>
+                </div>
+                <div class="answer-container">
+                    <div class="answer">
+                        <input type="text" placeholder=" Type your answer here.." name="" id="user-input">
+                        <br>
+
+                    </div>
+                </div>
+                <div class="answer-wrapper">
+                    <div>
+                        <input type="button" id="submit" value="Submit" onclick="submitFunction(this)">
+                    </div>
+
+                    <div class="show-answer" id="answer-btn">
+                        <div id="your-answer">
+                            <input type="button" id="show" value="answer" onclick="answerFunction(this)">
+                        </div>
+                        
+                    </div>
+                    <span id="ans">{{i.answer}}</span>
+
+                    
+                </div>
+
+              
+                
+            </div>
+            {% endfor %}
+            </div>
+            <script>
+                function answerFunction(elem) {
+                    elem.parentNode.children[0].style.visibility="hidden";
+                    elem.parentNode.parentNode.parentNode.children[2].style.display="flex";
+                    
+                }
+                function submitFunction(elem) {
+                //    answerFunction(elem.parentNode.parentNode);
+                    elem.parentNode.parentNode.children[1].children[0].style.visibility="hidden";
+                    elem.parentNode.parentNode.children[2].style.display="flex";    
+                    
+                }
+            </script>
+             <script type="text/javascript">
+                function loading() {
+                  $("#loading").show();
+                  $("#content").hide();
+                }
+              </script>
+</body>
+
+</html>
