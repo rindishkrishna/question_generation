@@ -268,24 +268,49 @@ height: 264px;
   .generate{
     display: flex;
     justify-content: center;
+    flex-direction: row;
   }
   #generate{
       width: 15rem;
       height: 3rem;
-      font-size: 1.1rem;
+      font-size: 1rem;
       background: black;
-      letter-spacing: 0.4rem;
+      /* letter-spacing: 0.4rem; */
       border: none;
       outline: none;
       color: #fff;
       border-radius: 10px;
       margin-top: 5rem;
       margin-bottom: 3rem;
+      margin-right: 30px;
   }
+  #summary{
+    width: 15rem;
+    height: 3rem;
+    font-size: 1rem;
+    background: black;
+    /* letter-spacing: 0.4rem; */
+    border: none;
+    outline: none;
+    color: #fff;
+    border-radius: 10px;
+    margin-top: 5rem;
+    margin-bottom: 3rem;
+}
   /* div#loading {
    
     } */
   @media only screen and (max-width: 800px){
+    .generate{
+        flex-direction: column;
+        align-items: center;
+      }
+      #generate{
+          margin-right: 0px;
+      }
+      #summary{
+          margin-top:0px;
+      }
       .or{
           margin-bottom: 1rem;
           margin-top:1rem;
