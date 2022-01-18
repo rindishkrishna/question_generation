@@ -1,22 +1,122 @@
 from flask import Flask,render_template, request
+from cleantext import clean
 import pickle
 app = Flask(__name__)
+
+
+# General I
+import torch
+import pickle
+from transformers import T5ForConditionalGeneration,T5Tokenizer
+
+summary_model = T5ForConditionalGeneration.from_pretrained('t5-large')
+summary_tokenizer = T5Tokenizer.from_pretrained('t5-large')
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+summary_model = summary_model.to(device)
+
+pickle.dump(summary_model, open('abstraction-model.pkl','wb'))
+
+# General II
+import random
+import numpy as np
+
+def set_seed(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+set_seed(7)
+
+#General III
+
+import nltk
+nltk.download('punkt')
+nltk.download('brown')
+nltk.download('wordnet')
+from nltk.corpus import wordnet as wn
+from nltk.tokenize import sent_tokenize
+
+#General IV
+
+def postprocesstext (content):
+  final=""
+  for sent in sent_tokenize(content):
+    sent = sent.capitalize()
+    final = final +" "+sent
+  return final
+
+
+def summarizer1(text,model,tokenizer):
+  text = text.strip().replace("\n"," ")
+  text = "summarize: "+text
+
+  max_len = 512
+  encoding = tokenizer.encode_plus(text,max_length=max_len, pad_to_max_length=True,truncation=True, return_tensors="pt").to(device)
+
+  input_ids, attention_mask = encoding["input_ids"], encoding["attention_mask"]
+
+  outs = model.generate(input_ids=input_ids,
+                                  attention_mask=attention_mask,
+                                  early_stopping=True,
+                                  num_beams=3,
+                                  num_return_sequences=1,
+                                  no_repeat_ngram_size=2,
+                                  min_length = 75,
+                                  max_length=300)
+
+
+  dec = [tokenizer.decode(ids,skip_special_tokens=True) for ids in outs]
+  summary = dec[0]
+  summary = postprocesstext(summary)
+  summary= summary.strip()
+
+  return summary
+
+def summarizer2(text,model,tokenizer):
+  text = text.strip().replace("\n"," ")
+  text = "summarize: "+text
+  max_len = 512
+  encoding = tokenizer.encode_plus(text,max_length=max_len, pad_to_max_length=True,truncation=True, return_tensors="pt").to(device)
+
+  input_ids, attention_mask = encoding["input_ids"], encoding["attention_mask"]
+
+  outs = model.generate(input_ids=input_ids,
+                                  attention_mask=attention_mask,
+                                  early_stopping=True,
+                                  num_beams=3,
+                                  num_return_sequences=2,
+                                  no_repeat_ngram_size=1,
+                                  min_length = 75,
+                                  max_length=512)
+
+
+  dec = [tokenizer.decode(ids,skip_special_tokens=True) for ids in outs]
+  summary = dec[0]
+  summary = postprocesstext(summary)
+  summary= summary.strip()
+
+  return summary
 
 @app.route("/")
 def main():
   return render_template('index.html')
-  # data="sdsdsdsdsd"
-  # return render_template('error.html',data=data)
 
-@app.route('/result', methods=['POST'])
+# @app.route("/error")
+# def hi():
+#   data = request.form['a']
+#   return render_template('error.html')
+
+@app.route('/questions-generated', methods=['POST'])
 def home():
     if request.method == 'POST':
       if request.form.get("generate"):
         data = request.form['a']
-        model = pickle.load(open('model-latest.pkl','rb'))
-        print("befor cleaning: "+data)
+        model = pickle.load(open('model.pkl','rb'))
+        # print("befor cleaning: "+data)
         quoted_text = '"""' + data + '"""'
-        print("quoted text: "+quoted_text)
+        # print("quoted text: "+quoted_text)
         Ctext = clean(quoted_text,
         fix_unicode=True,               # fix various unicode errors
         to_ascii=True,                  # transliterate to closest ASCII representation
@@ -38,12 +138,12 @@ def home():
         replace_with_currency_symbol="<CUR>",
         lang="en"                       # set to 'de' for German special handling
         )
-        print("after cleaning: "+Ctext)
         l=model(Ctext)
         return render_template('answer.html', data=l)
       elif request.form.get("try_again"):
+        print("executed")
         data = request.form['a']
-        model = pickle.load(open('model-latest.pkl','rb'))
+        model = pickle.load(open('model.pkl','rb')) 
         quoted_text = '"""' + data + '"""'
         Ctext = clean(quoted_text,
         fix_unicode=True,               # fix various unicode errors
@@ -67,7 +167,7 @@ def home():
         lang="en"                       # set to 'de' for German special handling
         )
         l=model(Ctext)
-        return render_template('answer.html', data=l) 
+        return render_template('answer.html', data=l)  
       elif request.form.get("summary"):
          data = request.form['a']
          model = pickle.load(open('abstraction-model.pkl','rb'))
@@ -75,7 +175,12 @@ def home():
          summarized_text2 = summarizer2(data,model,summary_tokenizer)
          final_text=summarized_text1+summarized_text2  
          return render_template('summary.html', data=final_text)
-      else:
-        return "Please try uploading the picture with maximum contrast edit and/or edit the text so that there are no extra spaces/symbols"      
-if __name__ == "__main__":
-  app.run(debug=True) 
+    else:
+      return "Please try uploading the picture with maximum contrast edit and/or edit the text so that there are no extra spaces/symbols"      
+@app.errorhandler(500)
+def internal_error(error):
+    data = request.form['a']
+    print("data"+data)
+    return render_template('error.html', data=data)       
+if __name__ == '__main__':
+ app.run()
